@@ -8,6 +8,11 @@ import java.util.concurrent.CyclicBarrier;
 
 public class App {
 
+    /* Los atributos matriz celdas y matriz booleanos hacen a una matriz que funcionara para el caso de la matriz celdas 
+     * como una forma de almacenarlas y de identificar facil a sus vecinos y sus respectivos buzones, mientras que matriz boolanos
+     * se usa para almacenar los datos de como se verían los valores de la matriz en el turno que está por venir. Su utlidad es 
+     * se centra netamente en que a partir de esta estructura se reescriben los valores de de cada una de las celdas de matriz de 
+     * celdas al pasar el turno y a través de la lectura de la misma se ejecuta la impresión o output de cada uno de los turnos.*/
     private static Celda[][] matrizCeldas;
     private static Boolean[][] matrizBooleanos;
     private static int celdasTotales;
@@ -16,7 +21,8 @@ public class App {
     private static int dimensiones;
     private static int turnoActual = 0;
     
-
+    /* Este metodo sobreescribe los estados de la matriz de celdas a partir de lo que le indica la matriz de booleanos. 
+     * (Se ejecuta al finalizar un turno)*/
     public static void ActualizarMatriz(Celda[][] mC, Boolean[][] mB){
         for (int i = 0; i < dimensiones; i++){
             for (int j = 0; j < dimensiones; j++){
@@ -42,6 +48,9 @@ public class App {
         celdasNotificadas++;
     }
 
+    /* A partir de la matriz booleana esta función imprime una cuadricula parecida a la del output de ejemplo que viene
+     * en la propia guía del caso. Es importante tener presente que ya está configurada para que crezca en función de n.
+     * (Siempre y cuando n >= 3 [segun la profe se esperaba que esa condición se cumpliera siempre.])*/
     public static void ImprimirMatrizXTurno(){
         String turno = String.valueOf(turnoActual);
         String respuesta = "Turno " + turno + " \n:";
@@ -82,18 +91,22 @@ public class App {
         int lineCount = -1;
         celdasNotificadas = 0;
 
+        /*Se trata de un input que le pregunta al usuario el número de turnos que desea tener en cuenta. */
         Scanner scannerTurnos = new Scanner(System.in);
         System.out.println("Ingrese el numero de etapas que turnos que desea considerar: ");
         turnosTotales = scannerTurnos.nextInt();
         scannerTurnos.close();
 
+        /* Inicialización de la barrera que se usará por todo el programa para confirmar el fin de los threads */
         CyclicBarrier barrera = new CyclicBarrier(1);
 
+        /*Acá se ejecuta la lectura del archivo txt que está ubicado en el mismo lugar que las demás clases. */
         try (FileReader fr = new FileReader("C1/src/test.txt")) {
             BufferedReader br = new BufferedReader(fr);
-            // Lectura del fichero
             String linea;
             while((linea=br.readLine())!=null){
+                /* Para el caso de la primera linea (que se establece cuando linecount == -1) este crea ambas matrices de acuerdo
+                * al tamaño que es indicado en este primer renglón.*/
                 if (lineCount == -1){
                     dimensiones = Integer.parseInt(linea);
                     matrizCeldas = new Celda[dimensiones][dimensiones];
@@ -101,6 +114,7 @@ public class App {
                     celdasTotales = dimensiones*dimensiones;
                     lineCount ++;
                 }
+                /*Por otro lado, va a leer los valores de entrada de cada fila y se los añade a un Array de booleanos */
                 else{
                     barrera = new CyclicBarrier(celdasTotales);
                     String[] raw = linea.split(",");
@@ -113,6 +127,9 @@ public class App {
                             estadosOriginales.add(true);
                         }
                     }
+                    /* Aquí itera obre ese array y se encarga de crear un id para cada celda que consistirá en un array
+                     * de la forma id = [linea, columna] y adicionalmente en función de la localización que esta celda ocupe 
+                     * dentro de la matriz le asigna la cantidad de vecinos que tiene adyacentes a la misma*/
                     for (int i = 0; i < estadosOriginales.size(); i++){
                         Boolean estadoSingular = estadosOriginales.get(i);
                         ArrayList<Integer> id = new ArrayList<Integer>();
@@ -154,11 +171,14 @@ public class App {
                             }
                         }
 
+                        /* Para terminos practicos el buzón también guarda el id de la celda a la que pertenece y
+                         * el número de vecinos que tiene la celda a la que él pertenece. */
                         Buzon buzonPropio = new Buzon(id, vecinos);
 
+                        /* Aquí se almacena a la celda a modo de threat dentro de la matrzi de celdas y posteriormente se
+                         * inicializa a modo de threat llamandolo desde la ubicación en la que quedo guardado. */
                         matrizCeldas[lineCount][i] = new Celda(id, buzonPropio, estadoSingular, barrera);
                         matrizCeldas[lineCount][i].start();
-                        System.out.println(matrizCeldas[lineCount][i]);
                     }
                     lineCount++;
                 }
@@ -172,6 +192,9 @@ public class App {
             e.printStackTrace();
         }
 
+        /*Esta estructura propone el salto de turnos tras haber finalizado con la creación de las matrices iniciales 
+         * (está a modo de prueba pues no he conseguido que corra hasta aquí pero usa la barrera para asegurarse que la 
+         * la matriz booleana del siguiente turno ya haya actualizada por cada uno de los threads). */
         while (turnoActual < turnosTotales){
             barrera.await();
             if (celdasNotificadas == celdasTotales){
