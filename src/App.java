@@ -48,6 +48,14 @@ public class App {
         celdasNotificadas++;
     }
 
+    public static int getTurnosTotales(){
+        return turnosTotales;
+    }
+
+    public static int getTurnoActual(){
+        return turnoActual;
+    }
+
     /* A partir de la matriz booleana esta función imprime una cuadricula parecida a la del output de ejemplo que viene
      * en la propia guía del caso. Es importante tener presente que ya está configurada para que crezca en función de n.
      * (Siempre y cuando n >= 3 [segun la profe se esperaba que esa condición se cumpliera siempre.])*/
@@ -59,7 +67,7 @@ public class App {
             respuesta = respuesta + extra1;
             for (int k = 3; k < dimensiones; k++){
                 String extra2 = "=====";
-                respuesta = respuesta +extra2;
+                respuesta = respuesta + extra2;
             }
             String extra3 = "\n";
             respuesta = respuesta + extra3;
@@ -80,7 +88,7 @@ public class App {
         respuesta = respuesta + extra6;
         for (int l = 3; l < dimensiones; l++){
             String extra7 = "=====";
-            respuesta = respuesta +extra7;
+            respuesta = respuesta + extra7;
         }
         String extra8 = "\n\n\n";
         respuesta = respuesta + extra8;
@@ -88,7 +96,7 @@ public class App {
     }
 
     public static void main(String[] args) throws Exception {
-        int lineCount = -1;
+        int lineCount = 0;
         celdasNotificadas = 0;
 
         /*Se trata de un input que le pregunta al usuario el número de turnos que desea tener en cuenta. */
@@ -101,13 +109,13 @@ public class App {
         CyclicBarrier barrera = new CyclicBarrier(1);
 
         /*Acá se ejecuta la lectura del archivo txt que está ubicado en el mismo lugar que las demás clases. */
-        try (FileReader fr = new FileReader("C1/src/test.txt")) {
+        try (FileReader fr = new FileReader("C:\\Users\\Ryzen 5 7600\\OneDrive\\Documentos\\GitHub\\C1\\src\\test.txt")) {
             BufferedReader br = new BufferedReader(fr);
             String linea;
             while((linea=br.readLine())!=null){
                 /* Para el caso de la primera linea (que se establece cuando linecount == -1) este crea ambas matrices de acuerdo
                 * al tamaño que es indicado en este primer renglón.*/
-                if (lineCount == -1){
+                if (lineCount == 0){
                     dimensiones = Integer.parseInt(linea);
                     matrizCeldas = new Celda[dimensiones][dimensiones];
                     matrizBooleanos = new Boolean[dimensiones][dimensiones];
@@ -130,29 +138,30 @@ public class App {
                     /* Aquí itera obre ese array y se encarga de crear un id para cada celda que consistirá en un array
                      * de la forma id = [linea, columna] y adicionalmente en función de la localización que esta celda ocupe 
                      * dentro de la matriz le asigna la cantidad de vecinos que tiene adyacentes a la misma*/
-                    for (int i = 0; i < estadosOriginales.size(); i++){
-                        Boolean estadoSingular = estadosOriginales.get(i);
+                    for (int p = 0; p < dimensiones; p++){
+                        System.out.println(p + "dimmmmmmmm");
+                        Boolean estadoSingular = estadosOriginales.get(p);
                         ArrayList<Integer> id = new ArrayList<Integer>();
-                        id.add(lineCount);
-                        id.add(i);
+                        id.add(lineCount-1);
+                        id.add(p);
                         int vecinos;
-                        if (lineCount == 0){
-                            if (i == 0){
+                        if (lineCount-1 == 0){
+                            if (p == 0){
                                 vecinos = 3;                              
                             }
-                            if (i == dimensiones){
+                            if (p == dimensiones-1){
                                 vecinos = 3;
                             }
                             else{
                                 vecinos = 5;
                             }
                         }
-                        else if (lineCount == dimensiones-1){
-                            if (i == 0){
+                        else if (lineCount-1 == dimensiones-1){
+                            if (p == 0){
   
                                 vecinos = 3;
                             }
-                            else if (i == dimensiones-1){
+                            else if (p == dimensiones-1){
                                 vecinos = 3;
                             }
                             else{
@@ -160,10 +169,10 @@ public class App {
                             }
                         }
                         else{
-                            if (i == 0){
+                            if (p == 0){
                                 vecinos = 5;
                             }
-                            else if (i == dimensiones-1){
+                            else if (p == dimensiones-1){
                                 vecinos = 5;
                             }
                             else{
@@ -173,12 +182,13 @@ public class App {
 
                         /* Para terminos practicos el buzón también guarda el id de la celda a la que pertenece y
                          * el número de vecinos que tiene la celda a la que él pertenece. */
-                        Buzon buzonPropio = new Buzon(id, vecinos);
+                        int tamano = lineCount;
+                        Buzon buzonPropio = new Buzon(tamano, vecinos);
 
                         /* Aquí se almacena a la celda a modo de threat dentro de la matrzi de celdas y posteriormente se
                          * inicializa a modo de threat llamandolo desde la ubicación en la que quedo guardado. */
-                        matrizCeldas[lineCount][i] = new Celda(id, buzonPropio, estadoSingular, barrera);
-                        matrizCeldas[lineCount][i].start();
+                        matrizCeldas[lineCount-1][p] = new Celda(id, buzonPropio, estadoSingular, barrera);
+                        matrizCeldas[lineCount-1][p].start();
                     }
                     lineCount++;
                 }

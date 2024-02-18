@@ -17,67 +17,69 @@ public class Celda extends Thread{
 
     public void run (){
 
-        Celda[][] matriz = App.getMatriz();
-        int fila = id.get(0);
-        int columna = id.get(1);
-        System.out.println("IDDDDDD" + id);
-        /* Lo primero que hace cada threat es averiguar en qué parte de la matriz está ubicado y a partir de eso se definirá
-         * un caso espécifico en función de dicha localización (en total hay 9 casos posibles). */
-        if (fila == 0){
-            if (columna == 0){
-                NotificarVecinos(fila, columna, 1, estado);
+        while (App.getTurnoActual() < App.getTurnosTotales()){
+            Celda[][] matriz = App.getMatriz();
+            int fila = id.get(0);
+            int columna = id.get(1);
+            System.out.println("IDDDDDD" + id);
+            /* Lo primero que hace cada threat es averiguar en qué parte de la matriz está ubicado y a partir de eso se definirá
+            * un caso espécifico en función de dicha localización (en total hay 9 casos posibles). */
+            if (fila == 0){
+                if (columna == 0){
+                    NotificarVecinos(fila, columna, 1, estado);
+                }
+                if (columna == matriz.length){
+                    NotificarVecinos(fila, columna, 3, estado);
+                }
+                else{
+                    NotificarVecinos(fila, columna, 2, estado);
+                }
             }
-            if (columna == matriz.length){
-                NotificarVecinos(fila, columna, 3, estado);
-            }
-            else{
-                NotificarVecinos(fila, columna, 2, estado);
-            }
-        }
-        else if (fila == matriz.length-1){
-            if (columna == 0){
-                NotificarVecinos(fila, columna, 7, estado);
-            }
-            else if (columna == matriz.length-1){
-                NotificarVecinos(fila, columna, 9, estado);
-            }
-            else{
-                NotificarVecinos(fila, columna, 8, estado);
-            }
-        }
-        else{
-            if (columna == 0){
-                NotificarVecinos(fila, columna, 4, estado);
-            }
-            else if (columna == matriz.length-1){
-                NotificarVecinos(fila, columna, 6, estado);
+            else if (fila == matriz.length-1){
+                if (columna == 0){
+                    NotificarVecinos(fila, columna, 7, estado);
+                }
+                else if (columna == matriz.length-1){
+                    NotificarVecinos(fila, columna, 9, estado);
+                }
+                else{
+                    NotificarVecinos(fila, columna, 8, estado);
+                }
             }
             else{
-                NotificarVecinos(fila, columna, 5, estado);
-            }
-        }
-
-        try{
-            /* Aquí se hace un llamado de la barrera para corroborar que todos los threads ya se encargaron de informar
-             * a sus vecinos en qué estado se encontraban (vivos/muertos -> true/false). */
-            barrera.await();
-
-            int vecinosVivos = buzonPropio.getVecinosVivos();
-
-            /* Aquí se hace la actualización en la matriz booleana de la app principal para la próxima generación en función
-             * de la cantidad de vecinos vivos que cada buzón haya reportado para su propia celula. */
-            if (estado == false && vecinosVivos == 3){
-                App.setBoolean(id.get(0), id.get(1), true);
-            }
-            else if (estado == true && (vecinosVivos > 3 || vecinosVivos == 0)){
-                App.setBoolean(id.get(0), id.get(1), false);
-            }
-            else if (estado == true && 1 <= vecinosVivos && vecinosVivos <= 3){
-                App.setBoolean(id.get(0), id.get(1), true);
+                if (columna == 0){
+                    NotificarVecinos(fila, columna, 4, estado);
+                }
+                else if (columna == matriz.length-1){
+                    NotificarVecinos(fila, columna, 6, estado);
+                }
+                else{
+                    NotificarVecinos(fila, columna, 5, estado);
+                }
             }
 
-        }catch (Exception e){
-            e.printStackTrace();
+            try{
+                /* Aquí se hace un llamado de la barrera para corroborar que todos los threads ya se encargaron de informar
+                * a sus vecinos en qué estado se encontraban (vivos/muertos -> true/false). */
+                barrera.await();
+
+                int vecinosVivos = buzonPropio.getVecinosVivos();
+
+                /* Aquí se hace la actualización en la matriz booleana de la app principal para la próxima generación en función
+                * de la cantidad de vecinos vivos que cada buzón haya reportado para su propia celula. */
+                if (estado == false && vecinosVivos == 3){
+                    App.setBoolean(id.get(0), id.get(1), true);
+                }
+                else if (estado == true && (vecinosVivos > 3 || vecinosVivos == 0)){
+                    App.setBoolean(id.get(0), id.get(1), false);
+                }
+                else if (estado == true && 1 <= vecinosVivos && vecinosVivos <= 3){
+                    App.setBoolean(id.get(0), id.get(1), true);
+                }
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }
         }
     }
 
@@ -167,11 +169,17 @@ public class Celda extends Thread{
      * en esas coordenada sea notificado por el estado que entró como booleano. */
     public synchronized void NotificarCelda (int fila, int columna, Boolean estado){
         Celda[][] matriz = App.getMatriz();
-        System.out.println(matriz.toString());
-        Celda celdaSeleccionada = matriz[fila][columna];
-        Buzon buzonSeleccionado = celdaSeleccionada.getBuzon();
-        buzonSeleccionado.NotificarBuzon(estado);
-        buzonSeleccionado.VaciarBuzon();
+        if (fila >= 0 && fila < matriz.length && columna >= 0 && columna < matriz[0].length) {
+            Celda celdaSeleccionada = matriz[fila][columna];
+            Buzon buzonSeleccionado = celdaSeleccionada.getBuzon();
+            buzonSeleccionado.NotificarBuzon(estado);
+            buzonSeleccionado.VaciarBuzon();
+        }
+        else{
+            System.out.println(fila + "ffff");
+            System.out.println(columna + "cccc");
+            System.out.println("Los índices están fuera de la matriz.");
+        }
     }
 
     public void setEstado(Boolean cambio){

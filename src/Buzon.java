@@ -3,17 +3,15 @@ import java.util.ArrayList;
 public class Buzon extends Thread{
 
     /*La estructura estados vecinos es un array que almacena los reportes de los estados de las celdas vecinas */
-    private ArrayList<Integer> id;
     private ArrayList<Boolean> estadosVecinos;
     private int vecinosVivos = 0;
     private int vecinosVerificados = 0;
     private int vecinosTotales;
+    
 
-    public Buzon (ArrayList<Integer> id, int vecinosTotales){
-        this.id = id;
+    public Buzon (int tamano, int vecinosTotales){
         this.vecinosTotales = vecinosTotales;
-        this.estadosVecinos = new ArrayList<Boolean>(id.get(0)+1);
-
+        this.estadosVecinos = new ArrayList<Boolean>(tamano);
     }
     
     /* Este método limpia o elimina el primer elemento que esté en el array de estadosVecinos y se encarga de cambiar
