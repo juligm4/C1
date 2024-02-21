@@ -23,11 +23,57 @@ public class App {
     
     /* Este metodo sobreescribe los estados de la matriz de celdas a partir de lo que le indica la matriz de booleanos. 
      * (Se ejecuta al finalizar un turno)*/
-    public static void ActualizarMatriz(Celda[][] mC, Boolean[][] mB){
+    public static void ActualizarMatriz(Celda[][] mC, Boolean[][] mB, CyclicBarrier barrera2){
         for (int i = 0; i < dimensiones; i++){
             for (int j = 0; j < dimensiones; j++){
-                Celda celdaEspecifica = mC[i][j];
-                celdaEspecifica.setEstado(mB[i][j]);
+                Boolean estado = mB[i][j];
+                ArrayList <Integer> ids = new ArrayList<Integer>(2);
+                ids.add(i);
+                ids.add(j);
+                int vecinos;
+                if (i == 0){
+                    if (j == 0){
+                        vecinos = 3;                              
+                    }
+                    if (j == dimensiones-1){
+                        vecinos = 3;
+                    }
+                    else{
+                        vecinos = 5;
+                    }
+                }
+                else if (i == dimensiones-1){
+                    if (j == 0){
+
+                        vecinos = 3;
+                    }
+                    else if (j == dimensiones-1){
+                        vecinos = 3;
+                    }
+                    else{
+                        vecinos = 5;
+                    }
+                }
+                else{
+                    if (j == 0){
+                        vecinos = 5;
+                    }
+                    else if (j == dimensiones-1){
+                        vecinos = 5;
+                    }
+                    else{
+                        vecinos = 8;
+                    }
+                }
+                int tamano = i;
+                Buzon buzonPropio = new Buzon(tamano, vecinos);
+                matrizCeldas[i][j] = new Celda(ids, buzonPropio, estado, barrera2);
+                
+            }
+        }
+        for (int i = 0; i < dimensiones; i++){
+            for (int j = 0; j < dimensiones; j++){
+                matrizCeldas[i][j].start();
             }
         }
     }
@@ -48,8 +94,12 @@ public class App {
         matrizBooleanos[fila][columna] = estado;
     }
 
-    public void NotificarActualizacion(){
+    public static void NotificarActualizacion(){
         celdasNotificadas++;
+    }
+
+    public static int getCeldasNotificadas(){
+        return celdasNotificadas;
     }
 
     public static int getTurnosTotales(){
@@ -110,26 +160,27 @@ public class App {
         scannerTurnos.close();
 
         /* Inicialización de la barrera que se usará por todo el programa para confirmar el fin de los threads */
-        CyclicBarrier barrera = new CyclicBarrier(9);
+        //CyclicBarrier barrera = new CyclicBarrier(9);
         
 
         /*Acá se ejecuta la lectura del archivo txt que está ubicado en el mismo lugar que las demás clases. */
-        try (FileReader fr = new FileReader("C:\\Users\\Ryzen 5 7600\\OneDrive\\Documentos\\GitHub\\C1\\src\\test.txt")) {
+        try (FileReader fr = new FileReader("src\\test.txt")) {
             BufferedReader br = new BufferedReader(fr);
-            String linea;
+            String linea=br.readLine();
+            dimensiones = Integer.parseInt(linea);
+            matrizCeldas = new Celda[dimensiones][dimensiones];
+            matrizBooleanos = new Boolean[dimensiones][dimensiones];
+            celdasTotales = dimensiones*dimensiones;
+
+            CyclicBarrier barrera = new CyclicBarrier(10);
+            CyclicBarrier barrera2 = new CyclicBarrier(9);
+
             while((linea=br.readLine())!=null){
                 /* Para el caso de la primera linea (que se establece cuando linecount == -1) este crea ambas matrices de acuerdo
                 * al tamaño que es indicado en este primer renglón.*/
-                if (lineCount == 0){
-                    dimensiones = Integer.parseInt(linea);
-                    matrizCeldas = new Celda[dimensiones][dimensiones];
-                    matrizBooleanos = new Boolean[dimensiones][dimensiones];
-                    celdasTotales = dimensiones*dimensiones;
-                    lineCount ++;
-                }
+                
                 /*Por otro lado, va a leer los valores de entrada de cada fila y se los añade a un Array de booleanos */
-                else{
-                    barrera = new CyclicBarrier(celdasTotales);
+                
                     String[] raw = linea.split(",");
                     ArrayList<Boolean> estadosOriginales = new ArrayList<Boolean>();
                     for (String r : raw){
@@ -144,13 +195,12 @@ public class App {
                      * de la forma ids = [linea, columna] y adicionalmente en función de la localización que esta celda ocupe 
                      * dentro de la matriz le asigna la cantidad de vecinos que tiene adyacentes a la misma*/
                     for (int p = 0; p < dimensiones; p++){
-                        System.out.println(lineCount-1 + "dimmmmmmmm");
                         Boolean estadoSingular = estadosOriginales.get(p);
                         ArrayList<Integer> ids = new ArrayList<Integer>();
-                        ids.add(lineCount-1);
+                        ids.add(lineCount);
                         ids.add(p);
                         int vecinos;
-                        if (lineCount-1 == 0){
+                        if (lineCount == 0){
                             if (p == 0){
                                 vecinos = 3;                              
                             }
@@ -161,7 +211,7 @@ public class App {
                                 vecinos = 5;
                             }
                         }
-                        else if (lineCount-1 == dimensiones-1){
+                        else if (lineCount == dimensiones-1){
                             if (p == 0){
   
                                 vecinos = 3;
@@ -193,28 +243,36 @@ public class App {
 
                         /* Aquí se almacena a la celda a modo de threat dentro de la matrzi de celdas y posteriormente se
                          * inicializa a modo de threat llamandolo desde la ubicación en la que quedo guardado. */
-                        matrizCeldas[lineCount-1][p] = new Celda(ids, buzonPropio, estadoSingular, barrera);
+                        matrizCeldas[lineCount][p] = new Celda(ids, buzonPropio, estadoSingular, barrera2);
                     }
                     lineCount++;
-                }
             }
+            
             for (int i = 0; i < matrizCeldas.length; i++) {
                 for (int j = 0; j < matrizCeldas[i].length; j++) {
                     matrizCeldas[i][j].start();
                 }
             }
+
+            System.out.println("Thread " + Thread.currentThread().getId() + " has reached the APP 208 barrier.");
+            // barrera.await();
+            
+            
             /*Esta estructura propone el salto de turnos tras haber finalizado con la creación de las matrices iniciales 
             * (está a modo de prueba pues no he conseguido que corra hasta aquí pero usa la barrera para asegurarse que la 
             * la matriz booleana del siguiente turno ya haya actualizada por cada uno de los threads). */
             while (turnoActual < turnosTotales){
-                barrera.await();
-                if (celdasNotificadas == celdasTotales){
-                    celdasNotificadas = 0;
-                    ImprimirMatrizXTurno();
-                    ActualizarMatriz(matrizCeldas, matrizBooleanos);
-                    turnoActual ++;
-                }
+                Thread.currentThread().sleep(300);
+                ImprimirMatrizXTurno();
+                ActualizarMatriz(matrizCeldas, matrizBooleanos, barrera2);
                 turnoActual++;
+                // if (celdasNotificadas == celdasTotales){
+                //     celdasNotificadas = 0;
+                //     System.out.println("Thread " + Thread.currentThread().getId() + " has reached the App 215 Barrier.");
+                //     // barrera.await();
+                // }
+                
+                // System.out.println("test2");
             }   
             
         }
