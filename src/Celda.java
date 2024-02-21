@@ -59,25 +59,23 @@ public class Celda extends Thread{
         try{
             /* Aquí se hace un llamado de la barrera para corroborar que todos los threads ya se encargaron de informar
             * a sus vecinos en qué estado se encontraban (vivos/muertos -> true/false). */
-            System.out.println("Thread " + Thread.currentThread().getId() + " has reached the Celda 64 barrier.");
             barrera2.await();
-            System.out.println("Thread " + Thread.currentThread().getId() + " has PASSED the barrier.");
             int vecinosVivos = buzonPropio.getVecinosVivos();
 
             /* Aquí se hace la actualización en la matriz booleana de la app principal para la próxima generación en función
             * de la cantidad de vecinos vivos que cada buzón haya reportado para su propia celula. */
-            System.out.println(vecinosVivos+" " +ids.get(0)+ ids.get(1));
+
             if (estado == false && vecinosVivos == 3){
                 App.setBoolean(ids.get(0), ids.get(1), true);
-                System.out.println("Celda " + ids.get(0) + " " + ids.get(1) + " cambió a true");
+                
             }
             else if (estado == true && (vecinosVivos > 3 || vecinosVivos == 0)){
                 App.setBoolean(ids.get(0), ids.get(1), false);
-                System.out.println("Celda " + ids.get(0) + " " + ids.get(1) + " cambió a false");
+                
             }
             else{
                 App.setBoolean(ids.get(0), ids.get(1), estado);
-                System.out.println("Celda " + ids.get(0) + " " + ids.get(1) + " se mantiene en "+ estado);
+                
             }
             
 
@@ -156,7 +154,7 @@ public class Celda extends Thread{
             NotificarCelda(fila-1, columna, estado);
         } 
         App.NotificarActualizacion();
-        System.out.println(App.getCeldasNotificadas() + "CELDASSSSS");
+        
     }
     
     /* Este método recibe una fila, una columna y un booleano de manera que a al buzón de la celda ubicada en la matriz

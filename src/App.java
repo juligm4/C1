@@ -172,7 +172,6 @@ public class App {
             matrizBooleanos = new Boolean[dimensiones][dimensiones];
             celdasTotales = dimensiones*dimensiones;
 
-            CyclicBarrier barrera = new CyclicBarrier(10);
             CyclicBarrier barrera2 = new CyclicBarrier(9);
 
             while((linea=br.readLine())!=null){
@@ -253,26 +252,17 @@ public class App {
                     matrizCeldas[i][j].start();
                 }
             }
-
-            System.out.println("Thread " + Thread.currentThread().getId() + " has reached the APP 208 barrier.");
-            // barrera.await();
             
             
             /*Esta estructura propone el salto de turnos tras haber finalizado con la creación de las matrices iniciales 
             * (está a modo de prueba pues no he conseguido que corra hasta aquí pero usa la barrera para asegurarse que la 
             * la matriz booleana del siguiente turno ya haya actualizada por cada uno de los threads). */
             while (turnoActual < turnosTotales){
-                Thread.currentThread().sleep(300);
+                Thread.currentThread().sleep(500);
                 ImprimirMatrizXTurno();
                 ActualizarMatriz(matrizCeldas, matrizBooleanos, barrera2);
                 turnoActual++;
-                // if (celdasNotificadas == celdasTotales){
-                //     celdasNotificadas = 0;
-                //     System.out.println("Thread " + Thread.currentThread().getId() + " has reached the App 215 Barrier.");
-                //     // barrera.await();
-                // }
                 
-                // System.out.println("test2");
             }   
             
         }
