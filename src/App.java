@@ -36,6 +36,10 @@ public class App {
         return matrizCeldas;
     }
 
+    public static Celda getCelda(int fila, int columna){
+        return matrizCeldas[fila][columna];
+    }
+
     public static Boolean[][] getBoolean(){
         return matrizBooleanos;
     }
@@ -106,7 +110,8 @@ public class App {
         scannerTurnos.close();
 
         /* Inicialización de la barrera que se usará por todo el programa para confirmar el fin de los threads */
-        CyclicBarrier barrera = new CyclicBarrier(1);
+        CyclicBarrier barrera = new CyclicBarrier(9);
+        
 
         /*Acá se ejecuta la lectura del archivo txt que está ubicado en el mismo lugar que las demás clases. */
         try (FileReader fr = new FileReader("C:\\Users\\Ryzen 5 7600\\OneDrive\\Documentos\\GitHub\\C1\\src\\test.txt")) {
@@ -135,15 +140,15 @@ public class App {
                             estadosOriginales.add(true);
                         }
                     }
-                    /* Aquí itera obre ese array y se encarga de crear un id para cada celda que consistirá en un array
-                     * de la forma id = [linea, columna] y adicionalmente en función de la localización que esta celda ocupe 
+                    /* Aquí itera obre ese array y se encarga de crear un ids para cada celda que consistirá en un array
+                     * de la forma ids = [linea, columna] y adicionalmente en función de la localización que esta celda ocupe 
                      * dentro de la matriz le asigna la cantidad de vecinos que tiene adyacentes a la misma*/
                     for (int p = 0; p < dimensiones; p++){
-                        System.out.println(p + "dimmmmmmmm");
+                        System.out.println(lineCount-1 + "dimmmmmmmm");
                         Boolean estadoSingular = estadosOriginales.get(p);
-                        ArrayList<Integer> id = new ArrayList<Integer>();
-                        id.add(lineCount-1);
-                        id.add(p);
+                        ArrayList<Integer> ids = new ArrayList<Integer>();
+                        ids.add(lineCount-1);
+                        ids.add(p);
                         int vecinos;
                         if (lineCount-1 == 0){
                             if (p == 0){
@@ -180,19 +185,37 @@ public class App {
                             }
                         }
 
-                        /* Para terminos practicos el buzón también guarda el id de la celda a la que pertenece y
+                        /* Para terminos practicos el buzón también guarda el ids de la celda a la que pertenece y
                          * el número de vecinos que tiene la celda a la que él pertenece. */
                         int tamano = lineCount;
                         Buzon buzonPropio = new Buzon(tamano, vecinos);
 
+
                         /* Aquí se almacena a la celda a modo de threat dentro de la matrzi de celdas y posteriormente se
                          * inicializa a modo de threat llamandolo desde la ubicación en la que quedo guardado. */
-                        matrizCeldas[lineCount-1][p] = new Celda(id, buzonPropio, estadoSingular, barrera);
-                        matrizCeldas[lineCount-1][p].start();
+                        matrizCeldas[lineCount-1][p] = new Celda(ids, buzonPropio, estadoSingular, barrera);
                     }
                     lineCount++;
                 }
             }
+            for (int i = 0; i < matrizCeldas.length; i++) {
+                for (int j = 0; j < matrizCeldas[i].length; j++) {
+                    matrizCeldas[i][j].start();
+                }
+            }
+            /*Esta estructura propone el salto de turnos tras haber finalizado con la creación de las matrices iniciales 
+            * (está a modo de prueba pues no he conseguido que corra hasta aquí pero usa la barrera para asegurarse que la 
+            * la matriz booleana del siguiente turno ya haya actualizada por cada uno de los threads). */
+            while (turnoActual < turnosTotales){
+                barrera.await();
+                if (celdasNotificadas == celdasTotales){
+                    celdasNotificadas = 0;
+                    ImprimirMatrizXTurno();
+                    ActualizarMatriz(matrizCeldas, matrizBooleanos);
+                    turnoActual ++;
+                }
+                turnoActual++;
+            }   
             
         }
         catch(FileNotFoundException e){
@@ -200,20 +223,6 @@ public class App {
         }
         catch(IOException e){
             e.printStackTrace();
-        }
-
-        /*Esta estructura propone el salto de turnos tras haber finalizado con la creación de las matrices iniciales 
-         * (está a modo de prueba pues no he conseguido que corra hasta aquí pero usa la barrera para asegurarse que la 
-         * la matriz booleana del siguiente turno ya haya actualizada por cada uno de los threads). */
-        while (turnoActual < turnosTotales){
-            barrera.await();
-            if (celdasNotificadas == celdasTotales){
-                celdasNotificadas = 0;
-                ImprimirMatrizXTurno();
-                ActualizarMatriz(matrizCeldas, matrizBooleanos);
-                turnoActual ++;
-            }
-            turnoActual++;
-        }        
+        }     
     }
 }
